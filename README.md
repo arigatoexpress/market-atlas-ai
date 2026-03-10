@@ -127,6 +127,14 @@ This writes:
 - `reports/latest/sol_scorecard.md`
 - `reports/scorecards/sol_hourly_history.jsonl`
 
+Optional cron installation (hourly at minute 5):
+
+```bash
+bash scripts/install_hourly_sol_scorecard_cron.sh
+# remove later:
+# bash scripts/uninstall_hourly_sol_scorecard_cron.sh
+```
+
 ## Project Layout
 
 - `/Users/aribs/Documents/Organized/Codex Projects/github/market-atlas-ai/src/market_atlas/connectors` – source adapters
