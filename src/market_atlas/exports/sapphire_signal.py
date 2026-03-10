@@ -8,6 +8,38 @@ from typing import List
 import duckdb
 
 
+def _clamp(value: float, low: float = 0.0, high: float = 1.0) -> float:
+    return max(low, min(high, value))
+
+
+def _directional_confidence(
+    action: str,
+    trend: float,
+    regime_confidence: float,
+    rsi: float | None,
+) -> float:
+    if action not in {"BUY", "SELL"}:
+        return 0.0
+
+    trend_strength = _clamp(abs(trend) * 4.0)
+    regime_strength = _clamp(regime_confidence)
+
+    rsi_bonus = 0.0
+    if rsi is not None:
+        if action == "BUY" and 45.0 <= rsi <= 70.0:
+            rsi_bonus = 0.05
+        elif action == "SELL" and (rsi <= 55.0 or rsi >= 70.0):
+            rsi_bonus = 0.05
+
+    # Calibrated to avoid overconfident EV on strong trend snapshots.
+    raw = 0.15 + 0.35 * trend_strength + 0.30 * regime_strength + rsi_bonus
+    aligned = (action == "BUY" and trend >= 0.0) or (action == "SELL" and trend <= 0.0)
+    if not aligned:
+        raw *= 0.5
+
+    return round(_clamp(raw), 4)
+
+
 def build_signals(conn: duckdb.DuckDBPyConnection, symbols: List[str]) -> List[dict]:
     if not symbols:
         return []
@@ -39,14 +71,18 @@ def build_signals(conn: duckdb.DuckDBPyConnection, symbols: List[str]) -> List[d
     signals = []
     for row in latest.itertuples(index=False):
         trend = row.trend_50_200 if row.trend_50_200 is not None else 0.0
-        confidence = float(max(0.0, min(1.0, 0.5 + trend * 5)))
-        if row.confidence is not None:
-            confidence = float(max(0.0, min(1.0, 0.6 * confidence + 0.4 * float(row.confidence))))
+        regime_confidence = float(row.confidence) if row.confidence is not None else 0.5
         action = "HOLD"
         if trend > 0.01 and row.regime in {"Goldilocks", "Reflation"}:
             action = "BUY"
         elif trend < -0.01 or row.regime in {"Slowdown", "Stagflation"}:
             action = "SELL"
+        confidence = _directional_confidence(
+            action=action,
+            trend=float(trend),
+            regime_confidence=regime_confidence,
+            rsi=float(row.rsi_14) if row.rsi_14 is not None else None,
+        )
 
         close = float(row.close) if row.close is not None else None
         atr = float(row.atr_14) if row.atr_14 is not None else None
@@ -84,6 +120,11 @@ def build_signals(conn: duckdb.DuckDBPyConnection, symbols: List[str]) -> List[d
                     "breakout_20": float(row.breakout_20) if row.breakout_20 is not None else None,
                     "source": "market_atlas",
                     "ts": str(row.ts),
+                    "confidence_components": {
+                        "trend_50_200": trend,
+                        "regime_confidence": regime_confidence,
+                        "rsi_14": float(row.rsi_14) if row.rsi_14 is not None else None,
+                    },
                 },
             }
         )

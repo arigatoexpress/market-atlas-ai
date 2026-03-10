@@ -37,3 +37,35 @@ def test_build_signals_includes_tp_sl_and_metadata():
     assert sig["take_profit"] is not None
     assert sig["stop_loss"] is not None
     assert sig["metadata"]["season"] == "Spring"
+
+
+def test_build_signals_directional_confidence_for_bearish_trend():
+    conn = duckdb.connect(":memory:")
+    init_db(conn)
+
+    conn.execute(
+        """
+        INSERT INTO features (
+            ts, symbol, close, ret_1d, ret_5d, vol_20d, ma_20, ma_50, ma_200,
+            trend_50_200, atr_14, rsi_14, breakout_20, source
+        )
+        VALUES
+            ('2026-03-01', 'SOLUSDT', 90.0, -0.02, -0.04, 0.3, 98, 95, 110, -0.15, 4.0, 52, -0.03, 'test')
+        """
+    )
+    conn.execute(
+        """
+        INSERT INTO regimes (
+            ts, regime, season, color, confidence, growth, inflation, liquidity,
+            policy_rate, policy_stance, business_cycle_phase, rationale
+        )
+        VALUES
+            ('2026-03-01', 'Slowdown', 'Autumn', '#00c853', 0.7, -0.1, -0.02, -0.01, 4.5, 'Neutral', 'Contraction', 'test')
+        """
+    )
+
+    signals = build_signals(conn, ["SOLUSDT"])
+    assert len(signals) == 1
+    sig = signals[0]
+    assert sig["action"] == "SELL"
+    assert sig["confidence"] >= 0.5
