@@ -42,7 +42,7 @@ market-atlas export-signals --output data/latest_signals.json
 market-atlas brief --symbols BTCUSDT,ETHUSDT,SOLUSDT,SPY,QQQ,GLD,SLV,CL=F
 market-atlas report --output-dir reports/latest
 market-atlas promotion-gate --output reports/latest/promotion_gate.json
-market-atlas publish-sapphire --symbols BTCUSDT,ETHUSDT,SOLUSDT
+market-atlas publish-sapphire --symbols SOLUSDT
 ```
 
 ## Data Domains Included
@@ -96,7 +96,7 @@ Example:
 ```bash
 market-atlas promotion-gate --output reports/latest/promotion_gate.json
 market-atlas publish-sapphire \
-  --symbols BTCUSDT,ETHUSDT,SOLUSDT \
+  --symbols SOLUSDT \
   --gateway-url http://127.0.0.1:18080
 ```
 
@@ -104,7 +104,15 @@ If your gateway requires auth:
 
 ```bash
 export SAPPHIRE_GATEWAY_API_TOKEN='...'
-market-atlas publish-sapphire --symbols BTCUSDT,ETHUSDT,SOLUSDT
+market-atlas publish-sapphire --symbols SOLUSDT
+```
+
+Strict local paper loop (SOL-only default):
+
+```bash
+bash scripts/run_local_cycle.sh
+# optional override to multi-symbol research publish:
+# STRICT_LIVE_MODE=false SYMBOLS=BTCUSDT,ETHUSDT,SOLUSDT bash scripts/run_local_cycle.sh
 ```
 
 ## Project Layout

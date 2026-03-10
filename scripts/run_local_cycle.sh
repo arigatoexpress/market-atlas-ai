@@ -7,7 +7,12 @@ cd "${ROOT_DIR}"
 source .venv/bin/activate
 
 START_DATE="${START_DATE:-2024-01-01}"
-SYMBOLS="${SYMBOLS:-BTCUSDT,ETHUSDT,SOLUSDT}"
+STRICT_LIVE_MODE="${STRICT_LIVE_MODE:-true}"
+if [[ "${STRICT_LIVE_MODE,,}" == "true" ]]; then
+  SYMBOLS="${SYMBOLS:-SOLUSDT}"
+else
+  SYMBOLS="${SYMBOLS:-BTCUSDT,ETHUSDT,SOLUSDT}"
+fi
 
 echo "[1/4] ingest + features + regimes + backtest"
 market-atlas full-run --start-date "${START_DATE}"
@@ -16,6 +21,7 @@ echo "[2/4] promotion gate"
 market-atlas promotion-gate --output reports/latest/promotion_gate.json
 
 echo "[3/4] publish signals to local Sapphire gateway (blocked unless gate passes)"
+echo "      symbols=${SYMBOLS} strict_live_mode=${STRICT_LIVE_MODE}"
 market-atlas publish-sapphire \
   --symbols "${SYMBOLS}" \
   --gateway-url "${SAPPHIRE_GATEWAY_URL:-http://127.0.0.1:18080}" \
