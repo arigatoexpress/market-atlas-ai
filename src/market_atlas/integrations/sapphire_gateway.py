@@ -21,6 +21,9 @@ def to_gateway_signal_payload(
     metadata["edge"] = signal.get("edge")
     metadata["strategy"] = signal.get("strategy")
     metadata["timeframe"] = signal.get("timeframe")
+    entry_price = signal.get("entry_price")
+    if entry_price is None:
+        entry_price = metadata.get("close")
 
     return {
         "symbol": signal.get("symbol"),
@@ -28,7 +31,7 @@ def to_gateway_signal_payload(
         "signal_type": "entry",
         "confidence": float(signal.get("confidence") or 0.0),
         "target_platforms": target_platforms,
-        "entry_price": metadata.get("close"),
+        "entry_price": entry_price,
         "stop_loss": signal.get("stop_loss"),
         "take_profit": signal.get("take_profit"),
         "quantity": None,

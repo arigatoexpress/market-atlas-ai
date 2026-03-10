@@ -69,6 +69,7 @@ def build_signals(conn: duckdb.DuckDBPyConnection, symbols: List[str]) -> List[d
                 "edge": round((row.ret_5d or 0.0) - (row.ret_1d or 0.0), 6),
                 "timeframe": "1d",
                 "strategy": "momentum_regime",
+                "entry_price": close,
                 "take_profit": tp,
                 "stop_loss": sl,
                 "metadata": {
@@ -76,6 +77,7 @@ def build_signals(conn: duckdb.DuckDBPyConnection, symbols: List[str]) -> List[d
                     "season": row.season,
                     "regime_confidence": row.confidence,
                     "business_cycle_phase": row.business_cycle_phase,
+                    "close": close,
                     "trend_50_200": trend,
                     "atr_14": atr,
                     "rsi_14": float(row.rsi_14) if row.rsi_14 is not None else None,
