@@ -100,3 +100,34 @@ def test_derive_go_no_go_passes_clean_snapshot():
     )
     assert decision["decision"] == "GO"
     assert decision["blockers"] == []
+
+
+def test_derive_go_no_go_blocks_when_promotion_gate_fails():
+    kpis = {
+        "max_drawdown_pct": -10.0,
+        "fill_rate_pct": 95.0,
+        "reject_tax_pct": 0.0,
+        "expected_value_error_pct": 1.0,
+        "signals_received": 10.0,
+        "trades_failed": 0.0,
+    }
+    promotion_gate = {
+        "passed": False,
+        "failed_checks": [
+            {"name": "total_return_pct", "pass": False},
+            {"name": "sharpe_annualized", "pass": False},
+        ],
+    }
+    decision = derive_go_no_go(
+        kpis,
+        ScorecardThresholds(
+            max_drawdown_pct=-35.0,
+            min_fill_rate_pct=70.0,
+            max_reject_tax_pct=25.0,
+            max_ev_error_pct=5.0,
+        ),
+        promotion_gate=promotion_gate,
+    )
+    assert decision["decision"] == "NO_GO"
+    blocker_codes = {b["code"] for b in decision["blockers"]}
+    assert "promotion_gate_fail" in blocker_codes

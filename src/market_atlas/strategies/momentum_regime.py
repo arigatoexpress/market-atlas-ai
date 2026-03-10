@@ -55,6 +55,12 @@ def run(
         )
 
     cost = (fee_bps + slippage_bps) / 10000.0
+    # Conservative risk controls for SOL-first promotion lanes.
+    risk_per_trade_fraction = 0.02
+    max_notional_fraction = 0.65
+    stop_atr_mult = 1.8
+    tp_atr_mult = 2.2
+    trail_atr_mult = 2.0
     records = []
     trade_rows = []
     n_symbols = max(1, len(symbols))
@@ -63,10 +69,11 @@ def run(
     for symbol, sdf in merged.groupby("symbol"):
         cash = symbol_capital
         units = 0.0
-        entry_cash = np.nan
         entry_price = np.nan
+        entry_notional = np.nan
         entry_date = None
         entry_atr = np.nan
+        peak_price = np.nan
 
         for row in sdf.itertuples(index=False):
             price = row.close if row.close is not None else np.nan
@@ -84,24 +91,43 @@ def run(
             exit_signal = in_pos and ((trend < 0) or (row.regime in {"Slowdown", "Stagflation"}))
 
             if in_pos and not np.isnan(entry_price) and atr > 0:
-                stop_px = entry_price - 1.5 * atr
-                tp_px = entry_price + 2.5 * atr
+                atr_ref = entry_atr if not np.isnan(entry_atr) and entry_atr > 0 else atr
+                if np.isnan(peak_price):
+                    peak_price = price
+                peak_price = max(peak_price, price)
+                stop_px = max(
+                    entry_price - stop_atr_mult * atr_ref,
+                    peak_price - trail_atr_mult * atr_ref,
+                )
+                tp_px = entry_price + tp_atr_mult * atr_ref
                 if price <= stop_px or price >= tp_px:
                     exit_signal = True
 
             if entry_signal:
                 exec_price = price * (1 + cost)
-                units = cash / exec_price if exec_price > 0 else 0.0
-                entry_price = exec_price
-                entry_date = row.ts
-                entry_cash = cash
-                entry_atr = atr
-                cash = 0.0
+                stop_distance = max((atr or 0.0) * stop_atr_mult, price * 0.01)
+                risk_budget = cash * risk_per_trade_fraction
+                max_notional = cash * max_notional_fraction
+                units_by_risk = risk_budget / stop_distance if stop_distance > 0 else 0.0
+                units_by_notional = max_notional / exec_price if exec_price > 0 else 0.0
+                sized_units = min(units_by_risk, units_by_notional)
+                if sized_units > 0:
+                    units = sized_units
+                    entry_price = exec_price
+                    entry_date = row.ts
+                    entry_notional = units * exec_price
+                    entry_atr = atr if atr > 0 else np.nan
+                    peak_price = price
+                    cash -= units * exec_price
 
             if units > 0 and exit_signal:
                 exec_price = price * (1 - cost)
-                cash = units * exec_price
-                pnl_pct = ((cash / entry_cash) - 1.0) * 100 if entry_cash and entry_cash > 0 else 0.0
+                cash += units * exec_price
+                pnl_pct = (
+                    ((exec_price - entry_price) / entry_price) * 100
+                    if entry_price and entry_price > 0
+                    else 0.0
+                )
                 trade_rows.append(
                     {
                         "ts": row.ts,
@@ -115,6 +141,9 @@ def run(
                         "metadata": {
                             "entry_date": str(entry_date),
                             "entry_atr": float(entry_atr) if not np.isnan(entry_atr) else None,
+                            "entry_notional": float(entry_notional)
+                            if not np.isnan(entry_notional)
+                            else None,
                             "exit_reason": "trend_regime_or_risk_exit",
                         },
                     }
@@ -122,8 +151,9 @@ def run(
                 units = 0.0
                 entry_price = np.nan
                 entry_date = None
-                entry_cash = np.nan
+                entry_notional = np.nan
                 entry_atr = np.nan
+                peak_price = np.nan
 
             equity = cash + (units * price)
             records.append({"ts": row.ts, "symbol": symbol, "equity": float(equity)})
@@ -132,7 +162,17 @@ def run(
     if curve.empty:
         return BacktestResult(curve, pd.DataFrame(), {"trades": 0, "total_return_pct": 0.0})
 
-    agg = curve.groupby("ts", as_index=False)["equity"].sum().sort_values("ts")
+    curve["ts"] = pd.to_datetime(curve["ts"])
+    # Synchronize per-symbol equity to a shared timeline so missing bars from
+    # one venue/asset class do not create artificial drawdown cliffs.
+    wide = (
+        curve.pivot_table(index="ts", columns="symbol", values="equity", aggfunc="last")
+        .sort_index()
+        .reindex(columns=symbols, fill_value=np.nan)
+        .ffill()
+        .fillna(symbol_capital)
+    )
+    agg = wide.sum(axis=1).reset_index(name="equity").sort_values("ts")
     peak = agg["equity"].cummax()
     drawdown = (agg["equity"] / peak - 1.0)
 

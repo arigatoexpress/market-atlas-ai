@@ -10,7 +10,11 @@ import duckdb
 import requests
 
 from market_atlas.exports.sapphire_signal import build_signals
-from market_atlas.pipelines.promotion import latest_backtest_summary
+from market_atlas.pipelines.promotion import (
+    PromotionThresholds,
+    evaluate_promotion_gate,
+    latest_backtest_summary,
+)
 
 
 @dataclass
@@ -153,7 +157,11 @@ def compute_metric_deltas(
     return deltas
 
 
-def derive_go_no_go(kpis: Dict[str, Optional[float]], thresholds: ScorecardThresholds) -> Dict[str, Any]:
+def derive_go_no_go(
+    kpis: Dict[str, Optional[float]],
+    thresholds: ScorecardThresholds,
+    promotion_gate: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
     blockers: List[Dict[str, str]] = []
 
     max_drawdown = _as_float(kpis.get("max_drawdown_pct"))
@@ -214,12 +222,24 @@ def derive_go_no_go(kpis: Dict[str, Optional[float]], thresholds: ScorecardThres
             }
         )
 
+    if promotion_gate and not promotion_gate.get("passed", False):
+        failed_checks = promotion_gate.get("failed_checks") or []
+        failed_names = [str(c.get("name")) for c in failed_checks if c.get("name")]
+        gate_msg = ", ".join(failed_names) if failed_names else "promotion threshold checks failed"
+        blockers.append(
+            {
+                "code": "promotion_gate_fail",
+                "message": f"Promotion gate failed: {gate_msg}",
+            }
+        )
+
     action_map = {
         "drawdown_limit": "Keep lane in paper mode and tighten stop-loss envelope before promotion.",
         "fill_rate_low": "Inspect venue connectivity/reject reasons before raising notional.",
         "reject_tax_high": "Reduce symbol scope and align publisher symbols to locked execution symbol.",
         "ev_error_high": "Recalibrate signal confidence and TP/SL model against realized outcomes.",
         "trade_failures_present": "Stabilize order routing and retries before any scale-up.",
+        "promotion_gate_fail": "Keep lane in paper mode and improve return/risk metrics before promotion.",
     }
     if blockers:
         top_actions = [action_map[b["code"]] for b in blockers[:3]]
@@ -299,6 +319,16 @@ def build_sol_scorecard(
 
     run_id = str(payload.get("run_id"))
     summary = payload.get("summary") or {}
+    promotion_gate = evaluate_promotion_gate(
+        payload,
+        thresholds=PromotionThresholds(
+            min_trades=60,
+            min_return_pct=20.0,
+            max_drawdown_pct=-35.0,
+            min_win_rate_pct=45.0,
+            min_sharpe=1.2,
+        ),
+    )
     trade_stats = latest_symbol_trade_stats(conn, run_id=run_id, symbol=symbol)
     expectation = signal_expectation_snapshot(conn, symbol=symbol)
     bot_status = fetch_bot_status(bot_status_url)
@@ -328,7 +358,7 @@ def build_sol_scorecard(
     history_file = Path(history_path)
     history = _load_history(history_file)
     deltas = compute_metric_deltas(kpis, history=history, now_utc=now_utc)
-    decision = derive_go_no_go(kpis, thresholds=thresholds)
+    decision = derive_go_no_go(kpis, thresholds=thresholds, promotion_gate=promotion_gate)
 
     scorecard = {
         "ts": now_utc.isoformat(),
@@ -344,6 +374,7 @@ def build_sol_scorecard(
         "signal_expectation": expectation,
         "symbol_trade_stats": trade_stats,
         "decision": decision,
+        "promotion_gate": promotion_gate,
         "thresholds": {
             "max_drawdown_pct": thresholds.max_drawdown_pct,
             "min_fill_rate_pct": thresholds.min_fill_rate_pct,
