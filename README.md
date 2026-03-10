@@ -41,6 +41,8 @@ market-atlas backtest --strategy momentum_regime --start-date 2024-01-01
 market-atlas export-signals --output data/latest_signals.json
 market-atlas brief --symbols BTCUSDT,ETHUSDT,SOLUSDT,SPY,QQQ,GLD,SLV,CL=F
 market-atlas report --output-dir reports/latest
+market-atlas promotion-gate --output reports/latest/promotion_gate.json
+market-atlas publish-sapphire --symbols BTCUSDT,ETHUSDT,SOLUSDT
 ```
 
 ## Data Domains Included
@@ -81,6 +83,29 @@ Regime output includes:
 ## Integration Surface
 
 Signal export schema in `/Users/aribs/Documents/Organized/Codex Projects/github/market-atlas-ai/src/market_atlas/exports/sapphire_signal.py` is designed to plug into your existing agent/trading orchestration.
+
+For local Sapphire stack integration:
+
+- publishes to `POST /api/signals/create` on local gateway
+- includes strategy/timeframe metadata passthrough
+- enforces backtest promotion gate by default before publish
+- use `--force` only for deliberate paper-lane overrides
+
+Example:
+
+```bash
+market-atlas promotion-gate --output reports/latest/promotion_gate.json
+market-atlas publish-sapphire \
+  --symbols BTCUSDT,ETHUSDT,SOLUSDT \
+  --gateway-url http://127.0.0.1:18080
+```
+
+If your gateway requires auth:
+
+```bash
+export SAPPHIRE_GATEWAY_API_TOKEN='...'
+market-atlas publish-sapphire --symbols BTCUSDT,ETHUSDT,SOLUSDT
+```
 
 ## Project Layout
 

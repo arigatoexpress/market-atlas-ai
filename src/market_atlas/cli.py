@@ -7,11 +7,18 @@ from dotenv import load_dotenv
 
 from market_atlas.config import AppConfig
 from market_atlas.core.db import connect, init_db, reset_db
-from market_atlas.exports.sapphire_signal import export_signals
+from market_atlas.exports.sapphire_signal import build_signals, export_signals
+from market_atlas.integrations.sapphire_gateway import publish_signals
 from market_atlas.pipelines.backtest import run_backtest
 from market_atlas.pipelines.features import rebuild_features
 from market_atlas.pipelines.ingest import ingest_all, ingest_domains
 from market_atlas.pipelines.intelligence import build_operator_brief
+from market_atlas.pipelines.promotion import (
+    PromotionThresholds,
+    evaluate_promotion_gate,
+    latest_backtest_summary,
+    write_gate_artifacts,
+)
 from market_atlas.pipelines.reporting import build_report
 from market_atlas.pipelines.regimes import rebuild_regimes
 
@@ -57,6 +64,28 @@ def main() -> None:
     brief_p = sub.add_parser("brief")
     brief_p.add_argument("--symbols", default="BTCUSDT,ETHUSDT,SOLUSDT,SPY,QQQ,GLD,SLV,CL=F")
     brief_p.add_argument("--output", default="reports/latest/operator_brief.json")
+
+    gate_p = sub.add_parser("promotion-gate")
+    gate_p.add_argument("--output", default="reports/latest/promotion_gate.json")
+    gate_p.add_argument("--min-trades", type=int, default=None)
+    gate_p.add_argument("--min-return-pct", type=float, default=None)
+    gate_p.add_argument("--max-drawdown-pct", type=float, default=None)
+    gate_p.add_argument("--min-win-rate-pct", type=float, default=None)
+    gate_p.add_argument("--min-sharpe", type=float, default=None)
+
+    publish_p = sub.add_parser("publish-sapphire")
+    publish_p.add_argument("--symbols", default="BTCUSDT,ETHUSDT,SOLUSDT")
+    publish_p.add_argument("--gateway-url", default=None)
+    publish_p.add_argument("--gateway-token", default=None)
+    publish_p.add_argument("--target-platforms", default="lighter")
+    publish_p.add_argument("--output", default="reports/latest/publish_results.json")
+    publish_p.add_argument("--gate-output", default="reports/latest/promotion_gate.json")
+    publish_p.add_argument("--force", action="store_true")
+    publish_p.add_argument("--min-trades", type=int, default=None)
+    publish_p.add_argument("--min-return-pct", type=float, default=None)
+    publish_p.add_argument("--max-drawdown-pct", type=float, default=None)
+    publish_p.add_argument("--min-win-rate-pct", type=float, default=None)
+    publish_p.add_argument("--min-sharpe", type=float, default=None)
 
     full = sub.add_parser("full-run")
     full.add_argument("--start-date", default="2024-01-01")
@@ -128,6 +157,68 @@ def main() -> None:
         symbols = [s.strip() for s in args.symbols.split(",") if s.strip()]
         brief = build_operator_brief(conn, symbols=symbols, output_path=args.output)
         print("✅ operator brief complete", brief)
+        return
+
+    if args.command in {"promotion-gate", "publish-sapphire"}:
+        payload = latest_backtest_summary(conn)
+        if not payload:
+            raise ValueError("No backtest run found. Run `market-atlas backtest` first.")
+
+        thresholds = PromotionThresholds(
+            min_trades=args.min_trades if args.min_trades is not None else cfg.promotion_min_trades,
+            min_return_pct=(
+                args.min_return_pct if args.min_return_pct is not None else cfg.promotion_min_return_pct
+            ),
+            max_drawdown_pct=(
+                args.max_drawdown_pct
+                if args.max_drawdown_pct is not None
+                else cfg.promotion_max_drawdown_pct
+            ),
+            min_win_rate_pct=(
+                args.min_win_rate_pct
+                if args.min_win_rate_pct is not None
+                else cfg.promotion_min_win_rate_pct
+            ),
+            min_sharpe=args.min_sharpe if args.min_sharpe is not None else cfg.promotion_min_sharpe,
+        )
+        gate = evaluate_promotion_gate(payload, thresholds=thresholds)
+        gate_output = args.output if args.command == "promotion-gate" else args.gate_output
+        artifacts = write_gate_artifacts(gate, output_json=gate_output)
+
+        if args.command == "promotion-gate":
+            print("✅ promotion gate complete", {"gate": gate, "artifacts": artifacts})
+            return
+
+        if not gate.get("passed") and not args.force:
+            print(
+                "⛔ publish blocked by promotion gate",
+                {
+                    "gate_status": "FAIL",
+                    "failed_checks": gate.get("failed_checks", []),
+                    "gate_artifacts": artifacts,
+                },
+            )
+            return
+
+        symbols = [s.strip() for s in args.symbols.split(",") if s.strip()]
+        target_platforms = [p.strip() for p in args.target_platforms.split(",") if p.strip()]
+        signals = build_signals(conn, symbols=symbols)
+        publish_result = publish_signals(
+            signals=signals,
+            gateway_url=(args.gateway_url or cfg.sapphire_gateway_url),
+            gateway_token=(args.gateway_token or cfg.sapphire_gateway_api_token),
+            target_platforms=target_platforms,
+            output_path=args.output,
+        )
+        print(
+            "✅ sapphire publish complete",
+            {
+                "gate_passed": gate.get("passed"),
+                "forced": bool(args.force),
+                "gate_artifacts": artifacts,
+                "publish": publish_result,
+            },
+        )
         return
 
     if args.command == "full-run":

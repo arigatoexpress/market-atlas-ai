@@ -46,6 +46,18 @@ Additional state fields:
 - Output can be ingested by existing Sapphire gateway/alpha controls
 - Promotion path expected: backtest evidence -> paper lane -> capped live lane
 
+## Promotion + Publish Flow
+
+1. `market-atlas backtest`
+2. `market-atlas promotion-gate` (threshold checks)
+3. `market-atlas publish-sapphire` (blocked automatically if gate fails unless `--force`)
+
+Gate artifact:
+- `reports/latest/promotion_gate.json`
+
+Publish artifact:
+- `reports/latest/publish_results.json`
+
 ## Research Outputs
 
 - Operator brief JSON/Markdown for daily decisioning
