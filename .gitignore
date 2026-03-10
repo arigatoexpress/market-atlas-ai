@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.pyc
+.env
+*.log
+*.db
+*.duckdb
+*.parquet
+*.egg-info/
+reports/
+.ipynb_checkpoints/
+data/*.json
+!data/.gitkeep
