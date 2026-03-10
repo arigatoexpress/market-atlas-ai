@@ -21,6 +21,7 @@ from market_atlas.pipelines.promotion import (
 )
 from market_atlas.pipelines.reporting import build_report
 from market_atlas.pipelines.regimes import rebuild_regimes
+from market_atlas.pipelines.scorecard import ScorecardThresholds, build_sol_scorecard
 
 
 def _date_or_default(value: str | None, fallback: str) -> str:
@@ -86,6 +87,17 @@ def main() -> None:
     publish_p.add_argument("--max-drawdown-pct", type=float, default=None)
     publish_p.add_argument("--min-win-rate-pct", type=float, default=None)
     publish_p.add_argument("--min-sharpe", type=float, default=None)
+
+    scorecard_p = sub.add_parser("scorecard")
+    scorecard_p.add_argument("--symbol", default="SOLUSDT")
+    scorecard_p.add_argument("--bot-status-url", default="http://127.0.0.1:18082/status")
+    scorecard_p.add_argument("--output", default="reports/latest/sol_scorecard.json")
+    scorecard_p.add_argument("--history-path", default="reports/scorecards/sol_hourly_history.jsonl")
+    scorecard_p.add_argument("--max-drawdown-pct", type=float, default=-35.0)
+    scorecard_p.add_argument("--min-fill-rate-pct", type=float, default=70.0)
+    scorecard_p.add_argument("--max-reject-tax-pct", type=float, default=25.0)
+    scorecard_p.add_argument("--max-ev-error-pct", type=float, default=5.0)
+    scorecard_p.add_argument("--no-append-history", action="store_true")
 
     full = sub.add_parser("full-run")
     full.add_argument("--start-date", default="2024-01-01")
@@ -157,6 +169,25 @@ def main() -> None:
         symbols = [s.strip() for s in args.symbols.split(",") if s.strip()]
         brief = build_operator_brief(conn, symbols=symbols, output_path=args.output)
         print("✅ operator brief complete", brief)
+        return
+
+    if args.command == "scorecard":
+        thresholds = ScorecardThresholds(
+            max_drawdown_pct=args.max_drawdown_pct,
+            min_fill_rate_pct=args.min_fill_rate_pct,
+            max_reject_tax_pct=args.max_reject_tax_pct,
+            max_ev_error_pct=args.max_ev_error_pct,
+        )
+        artifact = build_sol_scorecard(
+            conn=conn,
+            symbol=args.symbol,
+            bot_status_url=args.bot_status_url,
+            output_path=args.output,
+            history_path=args.history_path,
+            thresholds=thresholds,
+            append_history=not args.no_append_history,
+        )
+        print("✅ scorecard complete", artifact)
         return
 
     if args.command in {"promotion-gate", "publish-sapphire"}:

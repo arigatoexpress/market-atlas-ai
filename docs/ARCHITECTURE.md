@@ -51,12 +51,18 @@ Additional state fields:
 1. `market-atlas backtest`
 2. `market-atlas promotion-gate` (threshold checks)
 3. `market-atlas publish-sapphire` (blocked automatically if gate fails unless `--force`)
+4. `market-atlas scorecard` (hourly KPI digest + GO/NO-GO decision)
 
 Gate artifact:
 - `reports/latest/promotion_gate.json`
 
 Publish artifact:
 - `reports/latest/publish_results.json`
+
+Scorecard artifacts:
+- `reports/latest/sol_scorecard.json`
+- `reports/latest/sol_scorecard.md`
+- `reports/scorecards/sol_hourly_history.jsonl`
 
 ## Research Outputs
 

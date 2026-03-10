@@ -43,6 +43,7 @@ market-atlas brief --symbols BTCUSDT,ETHUSDT,SOLUSDT,SPY,QQQ,GLD,SLV,CL=F
 market-atlas report --output-dir reports/latest
 market-atlas promotion-gate --output reports/latest/promotion_gate.json
 market-atlas publish-sapphire --symbols SOLUSDT
+market-atlas scorecard --symbol SOLUSDT
 ```
 
 ## Data Domains Included
@@ -114,6 +115,17 @@ bash scripts/run_local_cycle.sh
 # optional override to multi-symbol research publish:
 # STRICT_LIVE_MODE=false SYMBOLS=BTCUSDT,ETHUSDT,SOLUSDT bash scripts/run_local_cycle.sh
 ```
+
+Hourly SOL scorecard loop (includes publish + KPI digest):
+
+```bash
+bash scripts/run_hourly_sol_scorecard.sh
+```
+
+This writes:
+- `reports/latest/sol_scorecard.json`
+- `reports/latest/sol_scorecard.md`
+- `reports/scorecards/sol_hourly_history.jsonl`
 
 ## Project Layout
 
