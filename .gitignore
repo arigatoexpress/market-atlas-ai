@@ -13,3 +13,15 @@ reports/
 .ipynb_checkpoints/
 data/*.json
 !data/.gitkeep
+
+# Build artifacts
+dist/
+build/
+.coverage
+htmlcov/
+
+# IDE / OS
+.DS_Store
+.cursor/
+.vscode/
+.idea/
