@@ -1,0 +1,122 @@
+# TradingView Autonomous Manager Configuration
+
+app:
+  name: "TradingView Autonomous Manager"
+  version: "1.0.0"
+  debug: false
+  host: "0.0.0.0"
+  port: 8081
+  
+tradingview:
+  # TradingView Desktop paths
+  windows_path: "C:\\Users\\%USERNAME%\\AppData\\Local\\Programs\\TradingView\\TradingView.exe"
+  
+  # Automation settings
+  headless: false
+  viewport_width: 1920
+  viewport_height: 1080
+  timeout: 30000
+  
+  # Default watchlists
+  default_watchlists:
+    - "Crypto Perps"
+    - "Forex Majors"
+    - "US Stocks"
+    
+  # Supported exchanges for DEX integration
+  supported_exchanges:
+    - "BINANCE"
+    - "BYBIT"
+    - "OKX"
+    - "HYPERLIQUID"
+    - "DYDX"
+    
+# Ollama Configuration for lightweight AI
+ollama:
+  host: "http://localhost:11434"
+  models:
+    analysis: "qwen2.5:14b"      # For market analysis
+    code_gen: "deepseek-r1:14b"   # For Pine Script generation
+    reasoning: "gemma3:27b"       # For strategy reasoning
+  
+  # Model parameters
+  parameters:
+    temperature: 0.7
+    top_p: 0.9
+    max_tokens: 2048
+
+# Tailscale Mesh Configuration
+tailscale:
+  enabled: true
+  auth_key_file: "config/tailscale.key"
+  raspberry_pis:
+    - name: "pi-signal-01"
+      hostname: "raspberrypi-01"
+      role: "signal_processor"
+    - name: "pi-monitor-01"
+      hostname: "raspberrypi-02"
+      role: "market_monitor"
+    - name: "pi-trade-01"
+      hostname: "raspberrypi-03"
+      role: "trade_executor"
+
+# DEX Integration Settings
+dex:
+  aster:
+    enabled: true
+    testnet: true
+    rpc_url: "https://api.asterprotocol.io"
+    ws_url: "wss://ws.asterprotocol.io"
+    
+  # Other perp DEXs
+  hyperliquid:
+    enabled: true
+    testnet: true
+    
+  drift:
+    enabled: true
+    
+  gmx:
+    enabled: true
+    network: "arbitrum"
+
+# Strategy Settings
+strategies:
+  # Default strategy parameters
+  default:
+    timeframe: "1h"
+    risk_per_trade: 0.02
+    max_positions: 5
+    
+  # Community script testing
+  community_scripts:
+    auto_test: true
+    test_duration_hours: 24
+    max_concurrent_tests: 3
+    
+  # Signal generation
+  signals:
+    min_confidence: 0.7
+    cooldown_minutes: 60
+    max_signals_per_day: 10
+
+# Logging
+logging:
+  level: "INFO"
+  file: "logs/tv_manager.log"
+  max_size_mb: 100
+  backup_count: 5
+  
+# Database
+database:
+  type: "sqlite"
+  path: "data/tv_manager.db"
+  
+# Security
+security:
+  api_key_header: "X-API-Key"
+  jwt_secret_file: "config/jwt.secret"
+  allowed_hosts:
+    - "localhost"
+    - "127.0.0.1"
+    - "*.tailscale.net"

@@ -1,0 +1,69 @@
+{
+  "id": "wl_20260226_185326",
+  "name": "Sapphire Focus List",
+  "symbols": [
+    "BTCUSDT",
+    "ETHUSDT",
+    "SOLUSDT",
+    "JUPUSDT",
+    "PYTHUSDT"
+  ],
+  "symbol_info": {
+    "BTCUSDT": {
+      "symbol": "BTCUSDT",
+      "name": "",
+      "exchange": "",
+      "type": "crypto",
+      "venue": "",
+      "is_active": true,
+      "added_at": "2026-02-26 18:53:28.624524",
+      "notes": ""
+    },
+    "ETHUSDT": {
+      "symbol": "ETHUSDT",
+      "name": "",
+      "exchange": "",
+      "type": "crypto",
+      "venue": "",
+      "is_active": true,
+      "added_at": "2026-02-26 18:53:30.669959",
+      "notes": ""
+    },
+    "SOLUSDT": {
+      "symbol": "SOLUSDT",
+      "name": "",
+      "exchange": "",
+      "type": "crypto",
+      "venue": "",
+      "is_active": true,
+      "added_at": "2026-02-26 18:53:32.719676",
+      "notes": ""
+    },
+    "JUPUSDT": {
+      "symbol": "JUPUSDT",
+      "name": "",
+      "exchange": "",
+      "type": "crypto",
+      "venue": "",
+      "is_active": true,
+      "added_at": "2026-02-26 18:53:34.788995",
+      "notes": ""
+    },
+    "PYTHUSDT": {
+      "symbol": "PYTHUSDT",
+      "name": "",
+      "exchange": "",
+      "type": "crypto",
+      "venue": "",
+      "is_active": true,
+      "added_at": "2026-02-26 18:53:36.863677",
+      "notes": ""
+    }
+  },
+  "created_at": "2026-02-26 18:53:26.589234",
+  "updated_at": "2026-02-26 18:53:36.863680",
+  "is_default": false,
+  "is_synced": false,
+  "category": "sapphire",
+  "description": "High-priority symbols for Sapphire trading"
+}

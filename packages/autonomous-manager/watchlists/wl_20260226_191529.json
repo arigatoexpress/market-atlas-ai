@@ -1,0 +1,25 @@
+{
+  "id": "wl_20260226_191529",
+  "name": "Test Watchlist",
+  "symbols": [
+    "BTCUSDT"
+  ],
+  "symbol_info": {
+    "BTCUSDT": {
+      "symbol": "BTCUSDT",
+      "name": "",
+      "exchange": "",
+      "type": "crypto",
+      "venue": "",
+      "is_active": true,
+      "added_at": "2026-02-26 19:15:31.141628",
+      "notes": ""
+    }
+  },
+  "created_at": "2026-02-26 19:15:29.101346",
+  "updated_at": "2026-02-26 19:15:31.141631",
+  "is_default": false,
+  "is_synced": false,
+  "category": "test",
+  "description": "Created by system test"
+}

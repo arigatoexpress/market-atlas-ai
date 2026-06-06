@@ -1,0 +1,124 @@
+{
+  "id": "wl_20260226_182155",
+  "name": "Forex Majors",
+  "symbols": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "USDCHF",
+    "AUDUSD",
+    "USDCAD",
+    "NZDUSD",
+    "EURGBP",
+    "EURJPY",
+    "GBPJPY"
+  ],
+  "symbol_info": {
+    "EURUSD": {
+      "symbol": "EURUSD",
+      "name": "",
+      "exchange": "",
+      "type": "forex",
+      "venue": "",
+      "is_active": true,
+      "added_at": "2026-02-26 18:21:55.689305",
+      "notes": ""
+    },
+    "GBPUSD": {
+      "symbol": "GBPUSD",
+      "name": "",
+      "exchange": "",
+      "type": "forex",
+      "venue": "",
+      "is_active": true,
+      "added_at": "2026-02-26 18:21:55.689308",
+      "notes": ""
+    },
+    "USDJPY": {
+      "symbol": "USDJPY",
+      "name": "",
+      "exchange": "",
+      "type": "forex",
+      "venue": "",
+      "is_active": true,
+      "added_at": "2026-02-26 18:21:55.689309",
+      "notes": ""
+    },
+    "USDCHF": {
+      "symbol": "USDCHF",
+      "name": "",
+      "exchange": "",
+      "type": "forex",
+      "venue": "",
+      "is_active": true,
+      "added_at": "2026-02-26 18:21:55.689310",
+      "notes": ""
+    },
+    "AUDUSD": {
+      "symbol": "AUDUSD",
+      "name": "",
+      "exchange": "",
+      "type": "forex",
+      "venue": "",
+      "is_active": true,
+      "added_at": "2026-02-26 18:21:55.689311",
+      "notes": ""
+    },
+    "USDCAD": {
+      "symbol": "USDCAD",
+      "name": "",
+      "exchange": "",
+      "type": "forex",
+      "venue": "",
+      "is_active": true,
+      "added_at": "2026-02-26 18:21:55.689312",
+      "notes": ""
+    },
+    "NZDUSD": {
+      "symbol": "NZDUSD",
+      "name": "",
+      "exchange": "",
+      "type": "forex",
+      "venue": "",
+      "is_active": true,
+      "added_at": "2026-02-26 18:21:55.689313",
+      "notes": ""
+    },
+    "EURGBP": {
+      "symbol": "EURGBP",
+      "name": "",
+      "exchange": "",
+      "type": "forex",
+      "venue": "",
+      "is_active": true,
+      "added_at": "2026-02-26 18:21:55.689314",
+      "notes": ""
+    },
+    "EURJPY": {
+      "symbol": "EURJPY",
+      "name": "",
+      "exchange": "",
+      "type": "forex",
+      "venue": "",
+      "is_active": true,
+      "added_at": "2026-02-26 18:21:55.689314",
+      "notes": ""
+    },
+    "GBPJPY": {
+      "symbol": "GBPJPY",
+      "name": "",
+      "exchange": "",
+      "type": "forex",
+      "venue": "",
+      "is_active": true,
+      "added_at": "2026-02-26 18:21:55.689315",
+      "notes": ""
+    }
+  },
+  "created_at": "2026-02-26 18:21:55.688838",
+  "updated_at": "2026-02-26 18:21:55.689316",
+  "is_default": false,
+  "is_synced": false,
+  "category": "forex",
+  "description": "Major forex pairs"
+}

@@ -1,0 +1,21 @@
+{
+  "id": "38130b980277",
+  "name": "Automated Test Strategy",
+  "description": "Created by system test",
+  "pine_code": "//@version=5\nstrategy(\"Test\")\nplot(close)",
+  "version": "v5",
+  "category": "strategy",
+  "author": "System Test",
+  "created_at": "2026-02-26 19:15:22.966191",
+  "updated_at": "2026-02-26 19:15:22.966191",
+  "is_active": false,
+  "is_validated": false,
+  "test_results": [],
+  "default_params": {},
+  "preferred_symbols": [],
+  "preferred_timeframes": [],
+  "venues": [
+    "ASTER",
+    "LIGHTER"
+  ]
+}
