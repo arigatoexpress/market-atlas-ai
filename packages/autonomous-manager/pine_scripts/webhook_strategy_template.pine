@@ -1,0 +1,112 @@
+//@version=5
+strategy("Sapphire Webhook Strategy", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=10)
+
+// ════════════════════════════════════════════════════════════════════════════════
+// INPUTS
+// ════════════════════════════════════════════════════════════════════════════════
+// Strategy parameters
+fastLength = input.int(12, "Fast EMA Length", minval=1)
+slowLength = input.int(26, "Slow EMA Length", minval=1)
+rsiLength = input.int(14, "RSI Length", minval=1)
+rsiOverbought = input.int(70, "RSI Overbought", minval=50, maxval=100)
+rsiOversold = input.int(30, "RSI Oversold", minval=0, maxval=50)
+
+// Risk management
+useStopLoss = input.bool(true, "Use Stop Loss")
+stopLossPerc = input.float(2.0, "Stop Loss %", minval=0.1, maxval=10.0, step=0.1)
+useTakeProfit = input.bool(true, "Use Take Profit")
+takeProfitPerc = input.float(4.0, "Take Profit %", minval=0.1, maxval=20.0, step=0.1)
+
+// Webhook alert message template
+webhookUrl = input.string("http://100.71.10.48:8082/tradingview-webhook", "Webhook URL")
+alertMessage = input.string('{"symbol":"{{ticker}}","action":"{{strategy.order.action}}","price":{{close}},"strategy":"Sapphire EMA RSI","timeframe":"{{timeframe}}"}', "Alert Message Template")
+
+// ════════════════════════════════════════════════════════════════════════════════
+// INDICATORS
+// ════════════════════════════════════════════════════════════════════════════════
+// EMAs
+fastEMA = ta.ema(close, fastLength)
+slowEMA = ta.ema(close, slowLength)
+
+// RSI
+rsi = ta.rsi(close, rsiLength)
+
+// ════════════════════════════════════════════════════════════════════════════════
+// SIGNALS
+// ════════════════════════════════════════════════════════════════════════════════
+// Trend conditions
+bullishTrend = fastEMA > slowEMA
+bearishTrend = fastEMA < slowEMA
+
+// RSI conditions
+rsiBuy = rsi < rsiOversold
+rsiSell = rsi > rsiOverbought
+
+// Entry signals
+longCondition = ta.crossover(fastEMA, slowEMA) and rsiBuy
+shortCondition = ta.crossunder(fastEMA, slowEMA) and rsiSell
+
+// ════════════════════════════════════════════════════════════════════════════════
+// STRATEGY EXECUTION
+// ════════════════════════════════════════════════════════════════════════════════
+// Calculate stop loss and take profit prices
+longStopPrice = strategy.position_avg_price * (1 - stopLossPerc / 100)
+longProfitPrice = strategy.position_avg_price * (1 + takeProfitPerc / 100)
+shortStopPrice = strategy.position_avg_price * (1 + stopLossPerc / 100)
+shortProfitPrice = strategy.position_avg_price * (1 - takeProfitPerc / 100)
+
+// Execute entries
+if (longCondition)
+    strategy.entry("Long", strategy.long, comment="LONG")
+    // Send webhook alert
+    alertMessageLong = '{"symbol":"' + syminfo.ticker + '","action":"buy","price":' + str.tostring(close) + ',"strategy":"Sapphire EMA RSI","timeframe":"' + timeframe.period + '"}'
+    alert(alertMessageLong, alert.freq_once_per_bar_close)
+
+if (shortCondition)
+    strategy.entry("Short", strategy.short, comment="SHORT")
+    // Send webhook alert
+    alertMessageShort = '{"symbol":"' + syminfo.ticker + '","action":"sell","price":' + str.tostring(close) + ',"strategy":"Sapphire EMA RSI","timeframe":"' + timeframe.period + '"}'
+    alert(alertMessageShort, alert.freq_once_per_bar_close)
+
+// Exit conditions
+if (useStopLoss and strategy.position_size > 0)
+    strategy.exit("Long SL", "Long", stop=longStopPrice, limit=longProfitPrice)
+
+if (useStopLoss and strategy.position_size < 0)
+    strategy.exit("Short SL", "Short", stop=shortStopPrice, limit=shortProfitPrice)
+
+// ════════════════════════════════════════════════════════════════════════════════
+// VISUALIZATION
+// ════════════════════════════════════════════════════════════════════════════════
+// Plot EMAs
+plot(fastEMA, "Fast EMA", color=color.new(color.blue, 0), linewidth=2)
+plot(slowEMA, "Slow EMA", color=color.new(color.red, 0), linewidth=2)
+
+// Fill between EMAs
+fillColor = fastEMA > slowEMA ? color.new(color.green, 80) : color.new(color.red, 80)
+fill(plot(fastEMA), plot(slowEMA), color=fillColor)
+
+// Plot buy/sell signals
+plotshape(longCondition, title="Buy Signal", location=location.belowbar, color=color.green, style=shape.triangleup, size=size.small)
+plotshape(shortCondition, title="Sell Signal", location=location.abovebar, color=color.red, style=shape.triangledown, size=size.small)
+
+// Background color for trend
+bgcolor(bullishTrend ? color.new(color.green, 90) : color.new(color.red, 90))
+
+// ════════════════════════════════════════════════════════════════════════════════
+// INFO PANEL
+// ════════════════════════════════════════════════════════════════════════════════
+var table infoPanel = table.new(position.top_right, 2, 5, bgcolor=color.new(color.black, 80), frame_width=1)
+
+if barstate.islast
+    table.cell(infoPanel, 0, 0, "Trend", text_color=color.white, text_size=size.small)
+    table.cell(infoPanel, 1, 0, bullishTrend ? "BULLISH" : "BEARISH", text_color=bullishTrend ? color.green : color.red, text_size=size.small)
+    table.cell(infoPanel, 0, 1, "RSI", text_color=color.white, text_size=size.small)
+    table.cell(infoPanel, 1, 1, str.tostring(rsi, "#.##"), text_color=rsi > 50 ? color.green : color.red, text_size=size.small)
+    table.cell(infoPanel, 0, 2, "Fast EMA", text_color=color.white, text_size=size.small)
+    table.cell(infoPanel, 1, 2, str.tostring(fastEMA, "#.##"), text_color=color.blue, text_size=size.small)
+    table.cell(infoPanel, 0, 3, "Slow EMA", text_color=color.white, text_size=size.small)
+    table.cell(infoPanel, 1, 3, str.tostring(slowEMA, "#.##"), text_color=color.red, text_size=size.small)
+    table.cell(infoPanel, 0, 4, "Position", text_color=color.white, text_size=size.small)
+    posText = strategy.position_size > 0 ? "LONG" : strategy.position_size < 0 ? "SHORT" : "FLAT"
+    table.cell(infoPanel, 1, 4, posText, text_color=strategy.position_size != 0 ? color.yellow : color.gray, text_size=size.small)

@@ -1,0 +1,12 @@
+fastapi==0.115.2
+uvicorn[standard]==0.32.0
+pydantic==2.9.0
+python-multipart==0.0.27
+websockets==14.0
+playwright==1.49.0
+paramiko==3.5.0
+aiohttp==3.14.0
+pyyaml==6.0.2
+python-dotenv==1.2.2
+starlette==0.40.0
+httpx==0.28.0

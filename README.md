@@ -2,6 +2,17 @@
 
 Local-first intelligence and strategy lab for crypto, equities, macro, and open-source data.
 
+## Consolidated platform
+
+Market Atlas AI is the consolidated trading flagship. Two formerly-standalone repos now live here as history-preserving subtrees under `packages/`:
+
+- **`packages/tradingview-mcp`** — TypeScript MCP server exposing TradingView data/tooling to agents.
+- **`packages/autonomous-manager`** — Python autonomous trading manager (strategies, webhook server, backend).
+
+Each package keeps its own manifest and build (`package.json` / `pyproject.toml`), so build and test them in their own directories.
+
+The platform is re-centered on **Hyperliquid, modern EVM/L2 perps, and prediction markets** — a strategic pivot off Sui.
+
 ## What this does
 
 Market Atlas AI ingests public market and news data, normalizes it into a local DuckDB warehouse, builds regime-aware features, runs historical backtests, and exports structured signals for downstream trading agents. Everything runs locally by default; no cloud dependency required.

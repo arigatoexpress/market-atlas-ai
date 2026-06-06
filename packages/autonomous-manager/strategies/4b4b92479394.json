@@ -1,0 +1,30 @@
+{
+  "id": "4b4b92479394",
+  "name": "Autonomous EMA Cross v2",
+  "description": "Automated EMA crossover strategy for autonomous trading",
+  "pine_code": "//@version=5\nstrategy(\"Autonomous EMA Cross\", overlay=true, initial_capital=10000)\n\nfastEMA = ta.ema(close, 12)\nslowEMA = ta.ema(close, 26)\n\nlongCondition = ta.crossover(fastEMA, slowEMA)\nshortCondition = ta.crossunder(fastEMA, slowEMA)\n\nif (longCondition)\n    strategy.entry(\"Long\", strategy.long)\nif (shortCondition)\n    strategy.entry(\"Short\", strategy.short)\n\nplot(fastEMA, \"Fast EMA\", color.blue)\nplot(slowEMA, \"Slow EMA\", color.red)\n",
+  "version": "v5",
+  "category": "strategy",
+  "author": "TV Autonomous Manager",
+  "created_at": "2026-02-26 19:21:17.133282",
+  "updated_at": "2026-02-26 19:21:17.133282",
+  "is_active": false,
+  "is_validated": false,
+  "test_results": [],
+  "default_params": {},
+  "preferred_symbols": [
+    "BTCUSDT",
+    "ETHUSDT",
+    "SOLUSDT",
+    "JUPUSDT"
+  ],
+  "preferred_timeframes": [
+    "1h",
+    "4h",
+    "1d"
+  ],
+  "venues": [
+    "ASTER",
+    "LIGHTER"
+  ]
+}

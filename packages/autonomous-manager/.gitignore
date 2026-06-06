@@ -1,0 +1,29 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+node_modules/
+*.log
+logs/
+signals/
+generated_scripts/
+.env
+*.env
+.env.*
+!.env.example
+
+# Build artifacts
+dist/
+build/
+.coverage
+htmlcov/
+
+# IDE / OS
+.DS_Store
+.cursor/
+.vscode/
+.idea/
+
+# Test cache
+.pytest_cache/
+.mypy_cache/

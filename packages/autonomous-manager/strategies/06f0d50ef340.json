@@ -1,0 +1,28 @@
+{
+  "id": "06f0d50ef340",
+  "name": "Sapphire EMA Crossover",
+  "description": "Automated EMA crossover strategy for Sapphire",
+  "pine_code": "//@version=5\nstrategy(\"Sapphire Auto Strategy\", overlay=true)\n\n// Inputs\nfastLength = input.int(12, \"Fast EMA Length\")\nslowLength = input.int(26, \"Slow EMA Length\")\n\n// Calculations\nfastEMA = ta.ema(close, fastLength)\nslowEMA = ta.ema(close, slowLength)\n\n// Signals\nlongCondition = ta.crossover(fastEMA, slowEMA)\nshortCondition = ta.crossunder(fastEMA, slowEMA)\n\n// Execute\nif (longCondition)\n    strategy.entry(\"Long\", strategy.long)\nif (shortCondition)\n    strategy.entry(\"Short\", strategy.short)\n\n// Plot\nplot(fastEMA, \"Fast EMA\", color.blue)\nplot(slowEMA, \"Slow EMA\", color.red)\n",
+  "version": "v5",
+  "category": "strategy",
+  "author": "TV Autonomous Manager",
+  "created_at": "2026-02-26 18:51:38.354716",
+  "updated_at": "2026-02-26 18:51:38.354717",
+  "is_active": false,
+  "is_validated": false,
+  "test_results": [],
+  "default_params": {},
+  "preferred_symbols": [
+    "BTCUSDT",
+    "ETHUSDT",
+    "SOLUSDT"
+  ],
+  "preferred_timeframes": [
+    "1h",
+    "4h"
+  ],
+  "venues": [
+    "ASTER",
+    "LIGHTER"
+  ]
+}
